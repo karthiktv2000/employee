@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { employee, employeeDocument } from './employee.schema';
@@ -11,17 +11,15 @@ export class AppService {
     @InjectModel(employee.name) private employeeModel: Model<employeeDocument>,
     private readonly jwtService: JwtService,
   ) {}
-  public async getemployee(em) {
-    return await this.employeeModel.find({ _id: em }).exec();
-  }
   public async postemployee(
     newemp: {
       readonly name: string;
       readonly email: string;
     },
     res,
-  ) {
+  ): Promise<void> {
     const emp = await new this.employeeModel(newemp);
+    console.log({ emp });
     this.employeeModel.findOne({ email: emp.email }, async (err, data) => {
       if (data == null) {
         emp.password = bcrypt.hashSync(emp.password, 10);
@@ -47,10 +45,7 @@ export class AppService {
               res.cookie('logout_cookie', token);
               res.send(`${req.body.email} logged in sucessfuly`);
             } else {
-              throw new HttpException(
-                `Invalid password try again`,
-                HttpStatus.NOT_FOUND,
-              );
+              res.status(HttpStatus.UNAUTHORIZED).send('invalid password');
             }
           });
         }
@@ -77,29 +72,6 @@ export class AppService {
       // throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
       //res.status(HttpStatus.FORBIDDEN).send('You are not allowed to do that');
       res.end('please login again');
-    }
-  }
-  public async leave(req, res) {
-    try {
-      const ver = this.jwtService.verify(req.cookies.logout_cookie);
-      if (!ver) {
-        res.status(403).end('Unautherized access');
-      }
-      this.employeeModel.findOneAndUpdate(
-        { email: ver.email },
-        { $set: { leave: true } },
-        { new: true },
-        (err, result) => {
-          if (err) {
-            console.log(err);
-          } else {
-            console.log(result);
-          }
-        },
-      );
-      res.status(200).end('request sent to admin please wait for the approval');
-    } catch (error) {
-      console.log(error);
     }
   }
   public async logout(req, res) {
