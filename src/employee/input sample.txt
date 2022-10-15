@@ -1,0 +1,7 @@
+{
+    "name": "sumanth",
+    "email": "sumanth@xyz.com",
+    "password": "sumanthsumanth",
+    "phone": "1234567899",
+    "salary":12345
+}
